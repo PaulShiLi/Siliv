@@ -67,7 +67,7 @@ app = BUNDLE(
     exe,
     name=f'{app_name}.app',
     icon=icon_path_source,
-    bundle_identifier='com.example.siliv', # CHANGE com.example
+    bundle_identifier='siliv', # CHANGE com.example
     info_plist={
         'NSPrincipalClass': 'NSApplication',
         'NSAppleScriptEnabled': False,
@@ -75,6 +75,6 @@ app = BUNDLE(
         'CFBundleName': app_name,
         'CFBundleVersion': '1.0.0',
         'CFBundleShortVersionString': '1.0',
-        'NSHumanReadableCopyright': 'Copyright © 2025 Your Name or Company. All rights reserved.'
+        'NSHumanReadableCopyright': 'Copyright © 2025 Somewhere. All rights reserved.'
     }
 )
