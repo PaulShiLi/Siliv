@@ -14,12 +14,12 @@ from PyQt6.QtCore import Qt, QTimer, QObject, pyqtSignal, QSettings
 from PyQt6.QtGui import QIcon, QCursor, QAction
 
 # Local Imports
-from siliv import config
+from siliv import config # config.RESERVED_SYSTEM_RAM_MIN will be used for warning threshold
 from siliv import utils
 from siliv.ui import widgets
 
 # --- Settings Constants ---
-ORGANIZATION_NAME = "Siliv.Project" # Or your preferred organization name
+ORGANIZATION_NAME = "SilivProject" # Or your preferred organization name
 APPLICATION_NAME = "Siliv"
 SAVED_VRAM_KEY = "user/savedVramMb"
 # --------------------------
@@ -40,6 +40,7 @@ class MenuBarApp(QObject):
         self.preset_list_cache = []
 
         # --- UI Widget/Action References ---
+        # ... (UI references remain the same) ...
         self.app_name_action = None
         self.ram_alloc_title_action = None
         self.ram_vram_bar_widget = None
@@ -59,24 +60,21 @@ class MenuBarApp(QObject):
 
         # --- Application Setup ---
         self.app = QApplication.instance()
-        # --- Initialize QSettings ---
         self.settings = QSettings(ORGANIZATION_NAME, APPLICATION_NAME)
-        # --------------------------
 
         self.is_operational = self.perform_initial_checks()
         if not self.is_operational:
             print("App is not operational due to failed initial checks.")
 
-        # Fetch initial values *before* checking saved settings
-        if self.total_ram_mb > 0: # Need total RAM to calculate things
-             self.update_ram_values() # Fetches current VRAM
-             self.target_vram_mb = self.current_vram_mb # Start with target = current
+        if self.total_ram_mb > 0:
+             self.update_ram_values()
+             self.target_vram_mb = self.current_vram_mb
+             # --- Calculate slider range BEFORE creating menu actions ---
              self.calculate_slider_range()
+             # ----------------------------------------------------------
              self.preset_list_cache = self.generate_presets_gb()
         else:
-             # Handle critical failure case where RAM couldn't be determined
              print("[App Init] Critical: Could not determine total RAM. App state is limited.")
-             # Set defaults to avoid errors later, though functionality is impaired
              self.current_vram_mb = 0
              self.target_vram_mb = 0
              self.min_vram_mb = config.SLIDER_MIN_MB
@@ -91,17 +89,15 @@ class MenuBarApp(QObject):
         self.menu = QMenu()
         self.create_menu_actions() # Creates actions and connects signals
 
-        # Show Tray Icon only if initialization was somewhat successful
-        if self.total_ram_mb > 0: # Basic check if we got RAM info
+        if self.total_ram_mb > 0:
             self.tray_icon.show()
             print("[App] Tray icon created and shown.")
         else:
             print("[App] Tray icon not shown due to critical initialization failure.")
 
-        self.update_menu_items() # Set initial UI state based on fetched/calculated values
+        self.update_menu_items()
 
         # --- Apply Saved VRAM on Startup ---
-        # Moved here, after initial values are fetched and menu items created/updated once
         if self.total_ram_mb > 0:
             self.apply_saved_vram_on_startup()
         # ---------------------------------
@@ -123,8 +119,6 @@ class MenuBarApp(QObject):
         self.macos_major_version = utils.get_macos_version()
         if self.macos_major_version == 0:
             self._show_error("Error", "Could not determine macOS version.")
-            # Allow limited mode if we can still get RAM
-            # return False
         else:
             print(f"Detected macOS Version: {self.macos_major_version}")
 
@@ -134,69 +128,89 @@ class MenuBarApp(QObject):
         self.total_ram_mb = utils.get_total_ram_mb()
         if not self.total_ram_mb or self.total_ram_mb <= 0:
             self._show_error("Error", "Could not retrieve total system RAM.\nApplication cannot function correctly.")
-            return False # This is critical, cannot proceed
+            return False # This is critical
 
         print(f"Total System RAM: {self.total_ram_mb} MB")
 
         if not can_set_vram:
-            # Show warning but allow app to continue in limited mode if RAM was read
             self._show_warning("Unsupported OS or Permissions", f"macOS {self.macos_major_version} might not support VRAM control with this tool, or permissions are insufficient.\nFunctionality will be limited to displaying information.")
             print(f"Using VRAM sysctl key: '{self.vram_key}' (or None)")
-            return False # Mark as not fully operational if we can't set VRAM
+            return False # Mark as not fully operational
         else:
              print(f"Using VRAM sysctl key: '{self.vram_key}'")
              print("Initial checks passed (VRAM control should be possible).")
-             return True # Operational means we can try to set VRAM
+             return True # Operational
+
 
     def calculate_slider_range(self):
         """Calculates the min/max allowable VRAM values for the slider."""
         if not self.total_ram_mb: return
 
+        # Min VRAM from config
         self.min_vram_mb = config.SLIDER_MIN_MB
-        self.max_vram_mb = self.total_ram_mb - config.RESERVED_SYSTEM_RAM_MIN
 
+        # --- MODIFICATION: Max VRAM is now total system RAM ---
+        self.max_vram_mb = self.total_ram_mb
+        # ----------------------------------------------------
+
+        # Ensure max is not less than min (handles very low RAM edge cases)
         if self.max_vram_mb < self.min_vram_mb:
-            self.max_vram_mb = max(self.min_vram_mb, self.total_ram_mb - 1024)
-            print(f"Warning: Low total RAM ({self.total_ram_mb}MB) relative to reserve ({config.RESERVED_SYSTEM_RAM_MIN}MB). Adjusted max VRAM to {self.max_vram_mb}MB.")
+            # If total RAM is somehow less than the configured min, use min as max
+            print(f"Warning: Total RAM ({self.total_ram_mb}MB) is less than minimum VRAM ({self.min_vram_mb}MB). Adjusting max VRAM.")
+            self.max_vram_mb = self.min_vram_mb
 
         print(f"VRAM Setting Range Calculated: Min={self.min_vram_mb}MB, Max={self.max_vram_mb}MB")
+
+        # --- Update slider range if it already exists ---
+        # This ensures that if this function is called later, the slider is updated
+        if hasattr(self, 'slider_widget') and self.slider_widget:
+             print("Updating existing slider widget range.")
+             self.slider_widget.set_range(self.min_vram_mb, self.max_vram_mb)
+        # ----------------------------------------------
 
     def generate_presets_gb(self):
         """Generates a list of sensible VRAM presets in GB tuples (GB, Label)."""
         presets = []
         if not self.total_ram_mb or self.max_vram_mb <= self.min_vram_mb: return []
 
+        # Use the potentially updated max_vram_mb (which could be total RAM)
         max_preset_mb = self.max_vram_mb
         calculated_default_mb = utils.calculate_default_vram_mb(self.total_ram_mb)
 
-        potential_gbs = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-        labels = ["Basic", "Balanced", "More", "Gaming", "High", "Very High", "Extreme", "Insane"]
+        potential_gbs = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256] # Added more higher potential values
+        labels = ["Basic", "Balanced", "More", "Gaming", "High", "Very High", "Extreme", "Insane", "Ludicrous", "Plaid"]
         label_idx = 0
 
         for gb in potential_gbs:
             mb = gb * 1024
+            # Check if within valid range [min_vram_mb, max_vram_mb]
             if self.min_vram_mb <= mb <= max_preset_mb:
+                # Only add if significantly different from default
                 if abs(mb - calculated_default_mb) > 1024:
                     if not any(p[0] == gb for p in presets):
                          label = labels[label_idx] if label_idx < len(labels) else f"{gb}GB"
                          presets.append((gb, label))
                          label_idx += 1
 
+        # Consider adding the calculated maximum allocatable VRAM as a preset if it's useful
         max_alloc_gb = int(max_preset_mb / 1024)
+        # Check if max is valid, different from default, and not already added
         if max_alloc_gb * 1024 >= self.min_vram_mb and abs(max_alloc_gb * 1024 - calculated_default_mb) > 1024:
-             if not any(p[0] == max_alloc_gb for p in presets):
-                 label = labels[min(label_idx, len(labels)-1)] if label_idx < len(labels) else "Max"
-                 presets.append((max_alloc_gb, label))
+             # Check if it's meaningfully different from the last added preset
+             if not presets or abs(max_alloc_gb - presets[-1][0]) >= 1 :
+                 if not any(p[0] == max_alloc_gb for p in presets):
+                     label = labels[min(label_idx, len(labels)-1)] if label_idx < len(labels) else "Max"
+                     presets.append((max_alloc_gb, label))
 
         presets.sort(key=lambda x: x[0])
-        print(f"Generated Presets: {presets}")
+        print(f"Generated Presets (using max_vram_mb={max_preset_mb}): {presets}")
         return presets
-
+        # --- END PRESET MODIFICATION ---
 
     def create_menu_actions(self):
         """Creates and adds actions and widgets to the menu."""
         self.menu.clear()
-        self.preset_actions.clear() # Clear previous preset actions
+        self.preset_actions.clear()
 
         # --- App Title ---
         self.app_name_action = QAction("Siliv VRAM Tool")
@@ -254,9 +268,11 @@ class MenuBarApp(QObject):
         self.custom_vram_title_action.setEnabled(False)
         self.menu.addAction(self.custom_vram_title_action)
 
+        # --- Initialize slider with the calculated range ---
         self.slider_widget = widgets.SliderWidget(min_val=self.min_vram_mb, max_val=self.max_vram_mb)
         self.slider_widget.setObjectName("SliderWidget")
         self.slider_widget.setEnabled(self.is_operational)
+        # --------------------------------------------------
 
         self.slider_widget.valueChanged.connect(self.handle_slider_value_changed)
         self.slider_widget.sliderReleased.connect(self.handle_slider_snap_applied)
@@ -306,15 +322,12 @@ class MenuBarApp(QObject):
         """Updates the text and enabled state of all menu items based on current state."""
         if self.total_ram_mb <= 0:
             print("Cannot update menu items: Total RAM unknown.")
-            # Disable most actions if RAM is unknown
             if self.default_action: self.default_action.setEnabled(False)
             if self.presets_menu: self.presets_menu.setEnabled(False)
             if self.slider_widget: self.slider_widget.setEnabled(False)
             if self.slider_value_action: self.slider_value_action.setEnabled(False)
-            # Allow refresh and quit
             return
 
-        # --- Update RAM Allocation Section ---
         if self.ram_vram_bar_widget:
             self.ram_vram_bar_widget.update_values(self.total_ram_mb, self.current_vram_mb, self.target_vram_mb)
 
@@ -326,7 +339,6 @@ class MenuBarApp(QObject):
         if self.reserved_ram_info_action: self.reserved_ram_info_action.setText(f"Reserved System RAM: {current_reserved_ram_gb:.1f} GB")
         if self.allocated_vram_info_action: self.allocated_vram_info_action.setText(f"Allocated VRAM: {current_vram_gb:.1f} GB ({self.current_vram_mb} MB)")
 
-        # --- Update Control Actions ---
         calculated_default_mb = utils.calculate_default_vram_mb(self.total_ram_mb)
         is_current_default = (self.current_vram_mb == calculated_default_mb)
 
@@ -342,11 +354,9 @@ class MenuBarApp(QObject):
                 original_text = action.text().split(" (Current)")[0]
                 action.setText(f"{original_text}{' (Current)' if is_current_preset else ''}")
 
-        # --- Update Custom Allocation Section ---
         if self.slider_widget:
              self.slider_widget.setEnabled(self.is_operational)
              if self.is_operational:
-                 # Set slider position based on the *target* value
                  self.slider_widget.set_value(self.target_vram_mb)
 
         if self.slider_value_action:
@@ -355,33 +365,28 @@ class MenuBarApp(QObject):
             can_apply_slider = (self.target_vram_mb != self.current_vram_mb)
             self.slider_value_action.setEnabled(self.is_operational and can_apply_slider)
 
-
     def _refresh_data_and_update_menu(self):
         """Refreshes RAM values and updates the menu display. Does NOT reset target."""
         print("[App] Refresh triggered...")
         vram_changed = self.update_ram_values()
-        # Keep target as is during auto-refresh, only reset when menu is opened
-        self.update_menu_items() # Update UI based on new current values and existing target
+        self.update_menu_items()
         if vram_changed:
              print("VRAM value changed since last check.")
-
 
     def handle_slider_value_changed(self, value_mb):
         """Updates ONLY the internal target VRAM state when slider moves (before release/snap)."""
         self.target_vram_mb = value_mb
-        # Update the 'Apply X GB' button text immediately as the slider moves
         if self.slider_value_action:
             target_gb = self.target_vram_mb / 1024.0
             self.slider_value_action.setText(f"Allocate {target_gb:.1f} GB VRAM")
             can_apply_slider = (self.target_vram_mb != self.current_vram_mb)
             self.slider_value_action.setEnabled(self.is_operational and can_apply_slider)
-        # Also update the bar display immediately to show the target changing
         if self.ram_vram_bar_widget:
             self.ram_vram_bar_widget.update_values(self.total_ram_mb, self.current_vram_mb, self.target_vram_mb)
 
 
     def handle_slider_snap_applied(self):
-        """Called AFTER slider release and snapping logic. Updates UI to final snapped value."""
+        # ... (This method remains unchanged) ...
         print("[App] Slider snap applied (or release handled). Updating UI to final target.")
         final_snapped_value = self.slider_widget.get_value()
 
@@ -389,12 +394,11 @@ class MenuBarApp(QObject):
              print(f"Aligning internal target ({self.target_vram_mb}) with final slider value ({final_snapped_value}) after snap.")
              self.target_vram_mb = final_snapped_value
 
-        # Update all menu items based on the final target value
         self.update_menu_items()
 
 
     def apply_slider_value_from_action(self):
-        """Applies the VRAM value currently targeted by the slider via the text action."""
+        # ... (This method remains unchanged) ...
         target_mb_to_apply = self.target_vram_mb
         print(f"Applying slider target value via text action: {target_mb_to_apply} MB")
         if target_mb_to_apply != self.current_vram_mb:
@@ -405,7 +409,7 @@ class MenuBarApp(QObject):
 
 
     def _set_vram_and_update(self, value_mb):
-        """Internal helper to attempt setting VRAM using utils.set_vram_mb and refresh menu."""
+        """Internal helper to attempt setting VRAM, including warning."""
         if not self.is_operational:
             self._show_error("Error", "Cannot set VRAM: Application is not operational (check macOS version or permissions).")
             return
@@ -420,77 +424,93 @@ class MenuBarApp(QObject):
         clamped_mb = target_mb
         # Clamp the requested value (unless it's 0 for default) before sending to set_vram_mb
         if target_mb != 0:
+             # Use the updated self.max_vram_mb which could be total RAM
              clamped_mb = max(self.min_vram_mb, min(target_mb, self.max_vram_mb))
              if clamped_mb != target_mb:
                  print(f"Requested VRAM {target_mb}MB clamped to range [{self.min_vram_mb}-{self.max_vram_mb}]: {clamped_mb}MB")
         else:
             print("Requesting reset to system default VRAM (passing 0 to sysctl).")
-            # When resetting to default, the actual value will be calculated by the system.
-            # We use the calculated default for immediate UI feedback, but save 0.
             calculated_default_mb = utils.calculate_default_vram_mb(self.total_ram_mb)
-            self.target_vram_mb = calculated_default_mb # Update target for UI
+            self.target_vram_mb = calculated_default_mb
             self.update_menu_items()
+
+        # --- ADD WARNING CHECK ---
+        if clamped_mb != 0: # Don't warn if setting to default
+            remaining_ram_mb = self.total_ram_mb - clamped_mb
+            warning_threshold_mb = config.RESERVED_SYSTEM_RAM_MIN # Use config value (4096)
+
+            if remaining_ram_mb < warning_threshold_mb:
+                remaining_ram_gb = remaining_ram_mb / 1024.0
+                warning_threshold_gb = warning_threshold_mb / 1024.0
+                print(f"Warning condition met: Remaining RAM ({remaining_ram_gb:.1f} GB) < Threshold ({warning_threshold_gb:.1f} GB)")
+
+                reply = QMessageBox.warning(None, 'Low System RAM Warning',
+                             f"Setting VRAM to {clamped_mb} MB will leave only "
+                             f"{remaining_ram_gb:.1f} GB of RAM for the System.\n\n"
+                             f"Allocating less than {warning_threshold_gb:.1f} GB for the system "
+                             f"may lead to instability or poor performance and a high swap usage "
+                             f"when VRAM has filled up."
+                             f"\n\nAre you sure you want to proceed?",
+                             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+                             QMessageBox.StandardButton.Cancel) # Default to Cancel
+
+                if reply == QMessageBox.StandardButton.Cancel:
+                    print("User cancelled VRAM set due to low system RAM warning.")
+                    # Reset target VRAM back to current to reflect cancellation
+                    self.target_vram_mb = self.current_vram_mb
+                    self.update_menu_items()
+                    return # Abort the setting process
+                else:
+                    print("User confirmed VRAM set despite low system RAM warning.")
+            else:
+                 print(f"Remaining RAM check passed: {remaining_ram_mb / 1024.0:.1f} GB >= {warning_threshold_mb / 1024.0:.1f} GB")
+        # --- END WARNING CHECK ---
 
 
         print(f"Calling utils.set_vram_mb with target: {clamped_mb}")
-        success, message = utils.set_vram_mb(clamped_mb) # Pass the clamped value
+        success, message = utils.set_vram_mb(clamped_mb)
 
         if success:
             print(f"VRAM set command reported success via utils. Saving {clamped_mb} MB to settings.")
-            # --- SAVE TO SETTINGS ---
-            self.settings.setValue(SAVED_VRAM_KEY, clamped_mb) # Save the value that was successfully set
-            self.settings.sync() # Ensure it's written to disk
-            # ------------------------
-            # Schedule a refresh after a short delay
+            self.settings.setValue(SAVED_VRAM_KEY, clamped_mb)
+            self.settings.sync()
             QTimer.singleShot(1500, self._refresh_data_and_update_menu)
         else:
-            # Error/Warning should have been shown by utils.set_vram_mb if it failed
             print(f"Failed to set VRAM or action cancelled. Message from utils: {message}")
-            # If setting failed, refresh UI immediately and reset target to current
             self.target_vram_mb = self.current_vram_mb
             self.update_menu_items()
 
 
     # --- Tray Icon Interaction ---
     def handle_tray_activation(self, reason):
-        """Shows the menu when the tray icon is clicked (Trigger or Context)."""
+        # ... (This method remains unchanged) ...
         if reason == QSystemTrayIcon.ActivationReason.Trigger or reason == QSystemTrayIcon.ActivationReason.Context:
             print(f"[App] Tray icon activated (Reason: {reason}), showing menu.")
-            # Refresh current values *before* showing the menu
             vram_changed = self.update_ram_values()
-            # Reset target to current when menu is opened, ensures slider starts at current value
             self.target_vram_mb = self.current_vram_mb
-            # Update all menu item states based on refreshed data and reset target
             self.update_menu_items()
-            # Position and show the menu
             self.menu.popup(QCursor.pos())
 
 
     # --- Slot Methods for Actions ---
     def set_default_vram(self):
-        """Sets VRAM to the system default (by setting the key to 0)."""
+        # ... (This method remains unchanged) ...
         print(f"[App] User requested setting VRAM to System Default.")
-        # We pass 0 to the utility, which handles the OS default logic.
-        # Update target immediately for UI feedback before applying
-        # Show the *calculated* default in the UI, but apply 0
         calculated_default_mb = utils.calculate_default_vram_mb(self.total_ram_mb)
         self.target_vram_mb = calculated_default_mb
         self.update_menu_items()
-        # Trigger the actual setting process (which passes 0 to the utility)
         self._set_vram_and_update(0) # Pass 0 to signify default
 
     def set_preset_vram(self, value_mb):
-        """Sets VRAM to a specific preset value."""
+        # ... (This method remains unchanged) ...
         print(f"[App] User requested setting VRAM to Preset: {value_mb} MB")
-        # Update target immediately for UI feedback
         self.target_vram_mb = value_mb
         self.update_menu_items()
-        # Trigger the actual setting process
         self._set_vram_and_update(value_mb)
 
-    # --- New Method for Startup Application ---
+    # --- Startup Application Method ---
     def apply_saved_vram_on_startup(self):
-        """Loads saved VRAM from settings and applies if different from current."""
+        # ... (This method remains unchanged from the previous version, but uses updated clamping) ...
         if not self.is_operational:
             print("[Startup Apply] Not operational, skipping saved VRAM check.")
             return
@@ -506,36 +526,21 @@ class MenuBarApp(QObject):
 
         if saved_vram_mb is not None:
             print(f"[Startup Apply] Found saved VRAM setting: {saved_vram_mb} MB")
-            # Ensure current_vram_mb is up-to-date (should be from init sequence)
             print(f"[Startup Apply] Current VRAM setting is: {self.current_vram_mb} MB")
 
             if saved_vram_mb != self.current_vram_mb:
                 print(f"[Startup Apply] Saved VRAM ({saved_vram_mb} MB) differs from current ({self.current_vram_mb} MB). Applying saved value.")
 
-                # Clamp saved value to current valid range before applying
+                # Use the current valid range [min_vram_mb, max_vram_mb] for clamping
                 clamped_saved_vram = max(self.min_vram_mb, min(saved_vram_mb, self.max_vram_mb))
                 if clamped_saved_vram != saved_vram_mb:
                      print(f"[Startup Apply] Warning: Clamping saved VRAM {saved_vram_mb}MB to current valid range [{self.min_vram_mb}-{self.max_vram_mb}]: {clamped_saved_vram}MB")
 
-                # IMPORTANT: Decide on user experience for password prompt
-                # Option 1: Apply directly (will prompt immediately)
-                self.target_vram_mb = clamped_saved_vram # Set target for consistency
-                self.update_menu_items() # Update UI elements state
-                self._set_vram_and_update(clamped_saved_vram)
-
-                # Option 2: Ask user first (comment out the direct apply above and uncomment below)
-                # reply = QMessageBox.question(None, 'Apply Saved VRAM?',
-                #              f"Apply saved VRAM setting of {clamped_saved_vram} MB?\n"
-                #              f"(Current is {self.current_vram_mb} MB)",
-                #              QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                #              QMessageBox.StandardButton.No)
-                # if reply == QMessageBox.StandardButton.Yes:
-                #     print("[Startup Apply] User chose to apply saved setting.")
-                #     self.target_vram_mb = clamped_saved_vram
-                #     self.update_menu_items()
-                #     self._set_vram_and_update(clamped_saved_vram)
-                # else:
-                #     print("[Startup Apply] User chose not to apply saved setting.")
+                # Apply directly on startup (will prompt for password if needed)
+                # The warning check is now inside _set_vram_and_update, so it will trigger here too
+                self.target_vram_mb = clamped_saved_vram
+                self.update_menu_items()
+                self._set_vram_and_update(clamped_saved_vram) # This call now includes the warning logic
 
             else:
                 print("[Startup Apply] Saved VRAM matches current setting. No action needed.")
@@ -543,13 +548,13 @@ class MenuBarApp(QObject):
             print("[Startup Apply] No saved VRAM setting found.")
 
 
-    # --- Utility Methods for User Feedback (remain in App class) ---
+    # --- Utility Methods for User Feedback ---
     def _show_message(self, title, message):
         """Shows an informational message via the system tray."""
         if self.tray_icon.isVisible():
             self.tray_icon.showMessage(title, message, QSystemTrayIcon.MessageIcon.Information, 3000)
         else:
-            print(f"INFO [{title}]: {message}") # Fallback if tray not visible
+            print(f"INFO [{title}]: {message}")
 
     def _show_warning(self, title, message):
         """Shows a warning message dialog."""
