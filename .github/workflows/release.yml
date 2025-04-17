@@ -2,58 +2,59 @@ name: macOS Build and Release
 
 on:
   release:
-    types: [published]
+    types: [published] # Trigger when a release is published
 
 permissions:
-  contents: write
+  contents: write # Allow writing release assets
 
 jobs:
   build:
-    runs-on: macos-latest
-    
+    runs-on: macos-latest # Use macOS runner
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4 # Use major version tag
 
       - name: Set up Python
-        uses: actions/setup-python@v4.9.0
+        uses: actions/setup-python@v5 # Use major version tag (v5 is latest)
         with:
           python-version: '3.11'
 
-      - name: Install Homebrew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          
+      # Assume Homebrew is pre-installed on runner, skip explicit install
+
       - name: Install create-dmg
-        run: |
-          brew install create-dmg
+        run: brew install create-dmg # Install build dependency
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4 # Use major version tag
+        with:
+          path: ~/.cache/pip # Standard pip cache location
+          # Key based on OS, pip, and requirements file hash
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip- # Fallback key
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-      - name: Install PyInstaller
-        run: |
-          pip install pyinstaller
-        working-directory: ./
+          pip install pyinstaller # Install build tool
 
       - name: Build Application and Create DMG
         run: |
-          chmod +x scripts/build_dmg.sh
-          ./scripts/build_dmg.sh
+          chmod +x scripts/build_dmg.sh # Ensure script is executable
+          ./scripts/build_dmg.sh      # Run the build script
 
-      - name: Upload DMG Artifact
-        uses: actions/upload-artifact@v4.6.2
+      # Optional: Upload artifact for debugging/inspection
+      - name: Upload DMG Artifact (Optional)
+        uses: actions/upload-artifact@v4 # Use major version tag
         with:
-          name: Siliv-Installer.dmg
-          path: dist/Siliv.dmg
+          name: Siliv-Installer # Artifact name in workflow summary
+          path: dist/Siliv.dmg    # Path to the DMG file
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2.2.1
+      - name: Upload Release Asset (DMG only)
+        uses: softprops/action-gh-release@v2 # Use major version tag
         with:
-          files: |
-            dist/Siliv.dmg
-            dist/Siliv.app
+          files: dist/Siliv.dmg # Only upload the DMG file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token is automatically available
