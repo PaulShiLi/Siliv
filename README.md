@@ -32,7 +32,7 @@ The application uses the `sysctl` command to read and write the `iogpu.wired_lim
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/PaulShiLi/Siliv.git
     cd siliv
     ```
 2.  **Create a virtual environment (Recommended):**
