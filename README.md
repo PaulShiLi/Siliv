@@ -150,7 +150,7 @@ Use the helper script with PyInstaller and `create-dmg`:
 
 ## ❤️ Support & Donations
 
-If Siliv helps you, please consider supporting:
+If Siliv helps you, please consider supporting by watching/starring this repo to help others find this repo more easier!
 
 <p align="center">
   <a href="https://ko-fi.com/sub01">
