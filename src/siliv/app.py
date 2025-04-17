@@ -169,43 +169,64 @@ class MenuBarApp(QObject):
         # ----------------------------------------------
 
     def generate_presets_gb(self):
-        """Generates a list of sensible VRAM presets in GB tuples (GB, Label)."""
+        """
+        Generates a list of sensible VRAM presets in GB tuples (GB, Label).
+        Includes standard presets and 1GB increments near the maximum.
+        """
         presets = []
-        if not self.total_ram_mb or self.max_vram_mb <= self.min_vram_mb: return []
+        if not self.total_ram_mb or self.max_vram_mb <= self.min_vram_mb:
+            print("[Presets] Cannot generate presets: Invalid RAM or VRAM range.")
+            return []
 
-        # Use the potentially updated max_vram_mb (which could be total RAM)
+        # Use calculated max allocatable VRAM based on reserve config
         max_preset_mb = self.max_vram_mb
+        # Calculate the theoretical macOS default for comparison
         calculated_default_mb = utils.calculate_default_vram_mb(self.total_ram_mb)
 
-        potential_gbs = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256] # Added more higher potential values
-        labels = ["Basic", "Balanced", "More", "Gaming", "High", "Very High", "Extreme", "Insane", "Ludicrous", "Plaid"]
+        print(f"[Presets] Max allocatable MB: {max_preset_mb}, Calculated default MB: {calculated_default_mb}, Min allowed MB: {self.min_vram_mb}")
+
+        # --- Standard Presets ---
+        # Added 256 and 512 here
+        potential_gbs = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 256, 512] # Base points
+        labels = ["Basic", "Balanced", "More", "Gaming", "High", "Very High", "Extreme", "Insane"] # Labels for standard points (fallback used for higher values)
         label_idx = 0
+        added_gbs = set() # Keep track of GB values added
 
         for gb in potential_gbs:
             mb = gb * 1024
-            # Check if within valid range [min_vram_mb, max_vram_mb]
-            if self.min_vram_mb <= mb <= max_preset_mb:
-                # Only add if significantly different from default
-                if abs(mb - calculated_default_mb) > 1024:
-                    if not any(p[0] == gb for p in presets):
-                         label = labels[label_idx] if label_idx < len(labels) else f"{gb}GB"
-                         presets.append((gb, label))
+            # Check if within valid range AND significantly different from default
+            if self.min_vram_mb <= mb <= max_preset_mb and abs(mb - calculated_default_mb) > 1024:
+                if gb not in added_gbs:
+                    # Assign labels sequentially or use GB value as fallback
+                    label = labels[label_idx] if label_idx < len(labels) else f"{gb} GB"
+                    presets.append((gb, label))
+                    added_gbs.add(gb)
+                    # Only increment label_idx if we actually used a label from the list
+                    if label_idx < len(labels):
                          label_idx += 1
+        print(f"[Presets] After standard points: {presets}")
 
-        # Consider adding the calculated maximum allocatable VRAM as a preset if it's useful
-        max_alloc_gb = int(max_preset_mb / 1024)
-        # Check if max is valid, different from default, and not already added
-        if max_alloc_gb * 1024 >= self.min_vram_mb and abs(max_alloc_gb * 1024 - calculated_default_mb) > 1024:
-             # Check if it's meaningfully different from the last added preset
-             if not presets or abs(max_alloc_gb - presets[-1][0]) >= 1 :
-                 if not any(p[0] == max_alloc_gb for p in presets):
-                     label = labels[min(label_idx, len(labels)-1)] if label_idx < len(labels) else "Max"
-                     presets.append((max_alloc_gb, label))
+        # --- Near-Maximum 1GB Increment Presets ---
+        max_alloc_gb = int(max_preset_mb / 1024) # The highest whole GB possible
+        num_near_max_presets = 4 # How many 1GB steps to add below the max (including max)
 
-        presets.sort(key=lambda x: x[0])
-        print(f"Generated Presets (using max_vram_mb={max_preset_mb}): {presets}")
+        # Iterate downwards from the max possible GB
+        for i in range(num_near_max_presets):
+            gb = max_alloc_gb - i
+            if gb <= 0: break # Stop if we go below 1GB
+
+            mb = gb * 1024
+            # Check conditions: within range, not too close to default, and not already added
+            if gb not in added_gbs and self.min_vram_mb <= mb <= max_preset_mb and abs(mb - calculated_default_mb) > 1024:
+                 print(f"[Presets] Adding near-max preset: {gb} GB")
+                 presets.append((gb, f"{gb} GB")) # Use simple label for these
+                 added_gbs.add(gb)
+
+        # --- Final Sort ---
+        presets.sort(key=lambda x: x[0]) # Sort all presets by GB value
+        print(f"[Presets] Final generated list: {presets}")
         return presets
-        # --- END PRESET MODIFICATION ---
+    # --- END PRESET MODIFICATION ---
 
     def create_menu_actions(self):
         """Creates and adds actions and widgets to the menu."""
