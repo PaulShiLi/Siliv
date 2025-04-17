@@ -8,21 +8,9 @@
 ---
 <br>
 
-<div style="text-align: center;">
-    <a href="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml">
-        <img 
-            style="display: block; 
-                margin-left: auto;
-                margin-right: auto;
-                width: 30%;"
-            src="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/badge.svg" 
-            alt="macOS Build and Release"
-        >
-        </img>
-    </a>
-</div>
-
-<br>
+<p align=center>
+    <a href="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/"><img src="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/badge.svg" alt="macOS Build and Release"></a>
+</p>
 
 ---
 <br>
@@ -35,7 +23,7 @@
 
 ## Description
 
-Siliv (`Sili`con `V`RAM) provides a convenient way to view the current VRAM allocation on Apple Silicon Macs (and potentially some Intel Macs with adjustable VRAM via sysctl) and set a custom limit. This can be useful for specific applications or games that might benefit from a higher VRAM allocation than the macOS default.
+Siliv (`Sili`con `V`RAM) provides a convenient way to view the current VRAM allocation on Apple Silicon Macs (with adjustable VRAM via sysctl) and set a custom limit. This can be useful for specific applications or games that might benefit from a higher VRAM allocation than the macOS default.
 
 The application uses the `sysctl` command to read and write the `iogpu.wired_limit_mb` (macOS 14 Sonoma and later) or `debug.iogpu.wired_limit` (macOS 13 Ventura) values. Setting the VRAM requires administrator privileges.
 
