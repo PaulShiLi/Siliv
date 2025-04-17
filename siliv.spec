@@ -54,7 +54,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False, # Set to False for GUI applications
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
@@ -67,14 +67,15 @@ app = BUNDLE(
     exe,
     name=f'{app_name}.app',
     icon=icon_path_source,
-    bundle_identifier='siliv', # CHANGE com.example
+    bundle_identifier='com.sub01.siliv',
     info_plist={
         'NSPrincipalClass': 'NSApplication',
         'NSAppleScriptEnabled': False,
+        'LSUIElement': '1',
         'CFBundleDisplayName': app_name,
         'CFBundleName': app_name,
         'CFBundleVersion': '1.0.0',
         'CFBundleShortVersionString': '1.0',
-        'NSHumanReadableCopyright': 'Copyright © 2025 Somewhere. All rights reserved.'
+        'NSHumanReadableCopyright': 'Copyright © 2025 Sub01. All rights reserved.'
     }
 )
