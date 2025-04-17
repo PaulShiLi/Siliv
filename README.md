@@ -5,6 +5,28 @@
   <br>
 </div>
 
+---
+<br>
+
+<div style="text-align: center;">
+    <a href="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml">
+        <img 
+            style="display: block; 
+                margin-left: auto;
+                margin-right: auto;
+                width: 30%;"
+            src="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/badge.svg" 
+            alt="macOS Build and Release"
+        >
+        </img>
+    </a>
+</div>
+
+<br>
+
+---
+<br>
+
 <div align="center">
   <img src="assets/imgs/app_1.png" alt="Siliv Application Menu Screenshot" width="350">
 </div>
