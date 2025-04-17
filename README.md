@@ -15,10 +15,6 @@
     <a href="https://github.com/PaulShiLi/Siliv/issues">
       <img src="https://img.shields.io/github/issues/PaulShiLi/Siliv?style=for-the-badge" alt="Issues">
     </a>
-    <br>
-    <a href="https://ko-fi.com/sub01">
-        <img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko‑fi">
-    </a>
   </p>
   <p>
     <strong>Topics:</strong>
@@ -160,6 +156,8 @@ If Siliv helps you, please consider supporting:
   <a href="https://ko-fi.com/sub01">
     <img src="https://www.ko-fi.com/img/githubbutton_sm.svg" alt="Buy me a coffee">
   </a>
+  <br>
+  <a href="https://www.buymeacoffee.com/sub01" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 </p>
 
 ---
