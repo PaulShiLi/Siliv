@@ -1,19 +1,49 @@
 <div align="center">
   <h1>Siliv</h1>
   <img src="assets/icons/logo.png" alt="Siliv Logo" width="150" height="150">
-  <h3>Just Another MacOS menu bar utility to adjust GPU VRAM allocation</h3>
-  <br>
+  <p>
+    <strong>Siliv</strong> (<em>Sili</em>con <em>V</em>RAM) — A simple macOS menu‑bar utility to adjust Apple Silicon GPU VRAM allocation
+  </p>
+  <p>
+    <a href="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml">
+      <img src="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/badge.svg" alt="Build Status">
+    </a>
+    <br>
+    <a href="https://github.com/PaulShiLi/Siliv/releases/latest">
+      <img src="https://img.shields.io/github/v/release/PaulShiLi/Siliv?style=for-the-badge" alt="Latest Release">
+    </a>
+    <a href="https://github.com/PaulShiLi/Siliv/issues">
+      <img src="https://img.shields.io/github/issues/PaulShiLi/Siliv?style=for-the-badge" alt="Issues">
+    </a>
+  </p>
+  <p>
+    <strong>Topics:</strong>
+    <code>macos</code> <code>apple-silicon</code> <code>vram</code> <code>menu-bar</code> <code>python</code>
+  </p>
 </div>
 
 ---
-<br>
 
-<p align=center>
-    <a href="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/"><img src="https://github.com/PaulShiLi/Siliv/actions/workflows/release.yml/badge.svg" alt="macOS Build and Release"></a>
-</p>
+## 📋 Table of Contents
+
+- [About](#about)  
+- [Quickstart](#quickstart)  
+- [Features](#features)  
+- [Requirements](#requirements)  
+- [Installation](#installation)  
+- [Running from Source](#running-from-source)  
+- [Building a .dmg](#building-a-dmg)  
+- [Usage Notes](#usage-notes)  
+- [Roadmap](#roadmap)  
+- [Contributing](#contributing)  
+- [Support & Donations](#support--donations)  
+- [License](#license)
 
 ---
-<br>
+
+## 🔍 About
+
+Siliv provides a convenient way to **view** and **set** GPU VRAM allocation on Apple Silicon Macs via `sysctl`. Whether you need more headroom for graphics‑intensive apps or want to revert to the macOS default, Siliv makes it effortless from your menu bar.
 
 <div align="center">
   <img src="assets/imgs/app_1.png" alt="Siliv Application Menu Screenshot" width="350">
@@ -21,80 +51,115 @@
 
 ---
 
-## Description
+## 🚀 Quickstart
 
-Siliv (`Sili`con `V`RAM) provides a convenient way to view the current VRAM allocation on Apple Silicon Macs (with adjustable VRAM via sysctl) and set a custom limit. This can be useful for specific applications or games that might benefit from a higher VRAM allocation than the macOS default.
-
-The application uses the `sysctl` command to read and write the `iogpu.wired_limit_mb` (macOS 14 Sonoma and later) or `debug.iogpu.wired_limit` (macOS 13 Ventura) values. Setting the VRAM requires administrator privileges.
-
-
-## Features
-
-* **Menu Bar Icon:** Resides in the macOS menu bar for easy access.
-* **VRAM Display:** Shows current allocated VRAM and reserved system RAM.
-* **Visual Allocation Bar:** Provides a graphical representation of the target VRAM vs. reserved RAM.
-* **Custom Allocation:** Set a specific VRAM limit (in MB) using a slider.
-    * Slider snaps to the nearest 5 GB interval upon release.
-* **Presets:** Quickly apply predefined VRAM allocation values.
-* **Default Reset:** Option to reset VRAM allocation to the macOS default (by setting the sysctl key to 0).
-* **Automatic Refresh:** Periodically updates the displayed VRAM information.
-
-## Requirements
-
-* **Operating System:** macOS (Tested primarily on Ventura/Sonoma, may have limited functionality on older versions). Requires a version where `iogpu.wired_limit_mb` or `debug.iogpu.wired_limit` sysctl keys are available.
-* **Python:** Python 3.x
-* **Dependencies:** PyQt6 (see `requirements.txt`)
-
-## Installation and Running from Source
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/PaulShiLi/Siliv.git
-    cd siliv
-    ```
-2.  **Create a virtual environment (Recommended):**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  **Run the application:**
-    ```bash
-    cd src;
-    python -m siliv.main;
-    ```
-    The Siliv icon should appear in your menu bar.
-
-## Building the Application (.dmg)
-
-A build script is provided to create a distributable `.dmg` file using PyInstaller and `create-dmg`.
-
-1.  **Install Build Tools:**
-    * **PyInstaller:** `pip install pyinstaller`
-    * **create-dmg:** Requires Homebrew. If you don't have Homebrew, install it first. Then run:
-        ```bash
-        brew install create-dmg
-        ```
-2.  **Run the build script:**
-    ```bash
-    ./scripts/build_dmg.sh
-    ```
-3.  The final `Siliv.dmg` file will be located in the `dist/` directory.
-
-## Usage Notes
-
-* **Administrator Privileges:** Setting the VRAM limit requires administrator privileges. You will be prompted for your password when applying a new VRAM value.
-* **System Stability:** Modifying VRAM allocation is an advanced feature. Setting it too high might potentially lead to system instability if not enough RAM is left for the OS and other applications. Use with caution.
-* **Persistence:** Changes made via `sysctl` might not persist across reboots by default.
+1. **Download the latest release** from the [GitHub Releases page](https://github.com/PaulShiLi/Siliv/releases).  
+2. **Move `Siliv.app`** to your `/Applications` folder.  
+3. **Launch Siliv** and grant administrator privileges when prompted.  
+4. **Adjust VRAM** via the menu‑bar slider—and enjoy!  
 
 ---
-## Project Supports
 
-Donations of any amounts are much appreciated!
+## ✨ Features
 
-<p align=center>
-    <a href="https://ko-fi.com/sub01"><img src="https://www.ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+- **Menu Bar Utility**  
+  One‑click access from your macOS menu bar.  
+- **Real‑Time VRAM Display**  
+  Shows current GPU‑allocated VRAM and reserved system RAM.  
+- **Visual Allocation Bar**  
+  Graphical comparison of target VRAM vs. reserved RAM.  
+- **Custom Slider Control**  
+  Set VRAM in MB; snaps to nearest 5 GB interval on release.  
+- **Presets**  
+  Quickly apply common VRAM values.  
+- **Reset to Default**  
+  Restore macOS defaults by setting sysctl to `0`.  
+- **Auto‑Refresh**  
+  Periodically updates without relaunching.
+
+---
+
+## 🛠️ Requirements
+
+- **macOS**: Ventura (13) or Sonoma (14) with `debug.iogpu.wired_limit` or `iogpu.wired_limit_mb`
+- **Python**: 3.11
+- **Dependencies**:  
+  ```text
+  PyQt6
+  ```
+
+---
+
+## 📦 Installation
+
+```bash
+git clone https://github.com/PaulShiLi/Siliv.git
+cd Siliv
+```
+
+### (Optional) Create & activate a virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## ▶️ Running from Source
+
+```bash
+cd src
+python -m siliv.main
+```
+
+The **Siliv** icon will appear in your macOS menu bar.
+
+---
+
+## 🖥️ Building a .dmg
+
+Use the helper script with PyInstaller and `create-dmg`:
+
+1. **Install tools**  
+   ```bash
+   pip install pyinstaller
+   brew install create-dmg
+   ```
+2. **Build**  
+   ```bash
+   ./scripts/build_dmg.sh
+   ```
+3. **Find** your `.dmg` in `dist/`.
+
+---
+
+## 📝 Usage Notes
+
+- **Admin Privileges**: Changes require administrator rights and will prompt for your password.  
+- **System Stability**: Excessive VRAM allocation may reduce available system RAM.  
+- **Persistence**: `sysctl` changes may reset after reboot;
+
+---
+
+## ❤️ Support & Donations
+
+If Siliv helps you, please consider supporting:
+
+<p align="center">
+  <a href="https://ko-fi.com/sub01">
+    <img src="https://www.ko-fi.com/img/githubbutton_sm.svg" alt="Buy me a coffee">
+  </a>
+  <br>
+  <a href="https://www.buymeacoffee.com/sub01" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 </p>
+
+---
+
+*Enjoy fine‑tuning your Apple Silicon VRAM with ease!*  
