@@ -13,9 +13,9 @@ from PyQt6.QtCore import Qt, QTimer, QObject, pyqtSignal
 from PyQt6.QtGui import QIcon, QCursor, QAction
 
 # Local Imports
-from . import config
-from . import utils
-from .ui import widgets # Import the widgets module
+from siliv import config
+from siliv import utils
+from siliv.ui import widgets
 
 class MenuBarApp(QObject):
     def __init__(self, icon_path, parent=None):
@@ -29,13 +29,13 @@ class MenuBarApp(QObject):
         self.vram_key = None
         self.min_vram_mb = config.SLIDER_MIN_MB
         self.max_vram_mb = config.SLIDER_MIN_MB # Will be calculated
-        self.is_operational = False # Can the app perform VRAM actions?
+        self.is_operational = False
         self.preset_list_cache = []
 
         # --- UI Widget/Action References ---
         self.app_name_action = None
         self.ram_alloc_title_action = None
-        self.ram_vram_bar_widget = None # Will be widgets.RamVramBarWidget
+        self.ram_vram_bar_widget = None
         self.ram_vram_bar_widget_action = None
         self.total_ram_info_action = None
         self.reserved_ram_info_action = None
@@ -44,7 +44,7 @@ class MenuBarApp(QObject):
         self.presets_menu = None
         self.preset_actions = {}
         self.custom_vram_title_action = None
-        self.slider_widget = None # Will be widgets.SliderWidget
+        self.slider_widget = None
         self.slider_widget_action = None
         self.slider_value_action = None # The "Apply X GB" action
         self.refresh_action = None
@@ -56,7 +56,6 @@ class MenuBarApp(QObject):
         self.is_operational = self.perform_initial_checks()
         if not self.is_operational:
             print("App is not operational due to failed initial checks.")
-            # Error message already shown in perform_initial_checks via _show_error
 
         if self.is_operational:
             self.update_ram_values()
@@ -371,7 +370,7 @@ class MenuBarApp(QObject):
         print("[App] Refresh triggered...")
         vram_changed = self.update_ram_values()
         # When refreshing manually, reset the target to match the actual current state
-        self.target_vram_mb = self.current_vram_mb
+        # self.target_vram_mb = self.current_vram_mb
         self.update_menu_items() # Update UI based on new current values and reset target
         if vram_changed:
              print("VRAM value changed since last check.")

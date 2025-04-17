@@ -2,3 +2,4 @@
 # List of Python dependencies for the Siliv project
 
 PyQt6>=6.0 # Changed from PyQt5
+pyinstaller>=6.13.0

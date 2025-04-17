@@ -8,9 +8,9 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 
 # Local Imports
-from .app import MenuBarApp                      # Import the main application class
-from .ui.styles import DARK_MENU_STYLESHEET    # Import the stylesheet
-from .assets_helper import resource_path       # Import the asset path helper
+from siliv.app import MenuBarApp
+from siliv.ui.styles import DARK_MENU_STYLESHEET
+from siliv.assets_helper import resource_path
 
 def main():
     """Main function to initialize and run the application."""

@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QRectF
 from PyQt6.QtGui import QPainter, QBrush, QColor, QPainterPath, QPen
 
 # Import config for colors and constants
-from .. import config
+from siliv import config
 
 # --- Custom Widget for RAM/VRAM Bar ---
 # BarDisplayWidget remains unchanged...

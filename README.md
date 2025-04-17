@@ -5,11 +5,18 @@
   <br>
 </div>
 
+<div align="center">
+  <img src="assets/imgs/app_1.png" alt="Siliv Application Menu Screenshot" width="350">
+</div>
+
+---
+
 ## Description
 
 Siliv (`Sili`con `V`RAM) provides a convenient way to view the current VRAM allocation on Apple Silicon Macs (and potentially some Intel Macs with adjustable VRAM via sysctl) and set a custom limit. This can be useful for specific applications or games that might benefit from a higher VRAM allocation than the macOS default.
 
 The application uses the `sysctl` command to read and write the `iogpu.wired_limit_mb` (macOS 14 Sonoma and later) or `debug.iogpu.wired_limit` (macOS 13 Ventura) values. Setting the VRAM requires administrator privileges.
+
 
 ## Features
 
@@ -46,7 +53,8 @@ The application uses the `sysctl` command to read and write the `iogpu.wired_lim
     ```
 4.  **Run the application:**
     ```bash
-    python -m src.siliv.main
+    cd src;
+    python -m siliv.main;
     ```
     The Siliv icon should appear in your menu bar.
 
