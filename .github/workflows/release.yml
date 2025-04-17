@@ -1,0 +1,59 @@
+name: macOS Build and Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4.9.0
+        with:
+          python-version: '3.11'
+
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Install PyInstaller
+        run: |
+          pip install pyinstaller
+        working-directory: ./
+
+      - name: Build Application and Create DMG
+        run: |
+          chmod +x scripts/build_dmg.sh
+          ./scripts/build_dmg.sh
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: Siliv-Installer.dmg
+          path: dist/Siliv.dmg
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          files: |
+            dist/Siliv.dmg
+            dist/Siliv.app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
