@@ -90,3 +90,11 @@ A build script is provided to create a distributable `.dmg` file using PyInstall
 * **System Stability:** Modifying VRAM allocation is an advanced feature. Setting it too high might potentially lead to system instability if not enough RAM is left for the OS and other applications. Use with caution.
 * **Persistence:** Changes made via `sysctl` might not persist across reboots by default.
 
+---
+## Project Supports
+
+Donations of any amounts are much appreciated!
+
+<p align=center>
+    <a href="https://ko-fi.com/sub01"><img src="https://www.ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+</p>
