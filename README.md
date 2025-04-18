@@ -31,10 +31,10 @@
 - [Features](#-features)  
 - [Requirements](#-requirements)  
 - [Installation](#-installation)  
-- [Running from Source](#-running-from-source)  
-- [Building a .dmg](#-building-a-dmg)  
+- [Running from Source](#%EF%B8%8F-running-from-source)  
+- [Building a .dmg](#%EF%B8%8F-building-a-dmg)  
 - [Usage Notes](#-usage-notes)  
-- [Support & Donations](#-support--donations)  
+- [Support & Donations](%EF%B8%8F-support--donations)  
 
 
 ---
