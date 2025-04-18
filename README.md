@@ -29,7 +29,7 @@
 - [About](#-about)  
 - [Quickstart](#-quickstart)  
 - [Features](#-features)  
-- [Requirements](#-requirements)  
+- [Requirements](#%EF%B8%8F-requirements)  
 - [Installation](#-installation)  
 - [Running from Source](#%EF%B8%8F-running-from-source)  
 - [Building a .dmg](#%EF%B8%8F-building-a-dmg)  
