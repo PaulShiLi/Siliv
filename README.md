@@ -34,7 +34,7 @@
 - [Running from Source](#%EF%B8%8F-running-from-source)  
 - [Building a .dmg](#%EF%B8%8F-building-a-dmg)  
 - [Usage Notes](#-usage-notes)  
-- [Support & Donations](%EF%B8%8F-support--donations)  
+- [Support & Donations](#%EF%B8%8F-support--donations)  
 
 
 ---
