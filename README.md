@@ -26,18 +26,16 @@
 
 ## 📋 Table of Contents
 
-- [About](#about)  
-- [Quickstart](#quickstart)  
-- [Features](#features)  
-- [Requirements](#requirements)  
-- [Installation](#installation)  
-- [Running from Source](#running-from-source)  
-- [Building a .dmg](#building-a-dmg)  
-- [Usage Notes](#usage-notes)  
-- [Roadmap](#roadmap)  
-- [Contributing](#contributing)  
-- [Support & Donations](#support--donations)  
-- [License](#license)
+- [About](#-about)  
+- [Quickstart](#-quickstart)  
+- [Features](#-features)  
+- [Requirements](#-requirements)  
+- [Installation](#-installation)  
+- [Running from Source](#-running-from-source)  
+- [Building a .dmg](#-building-a-dmg)  
+- [Usage Notes](#-usage-notes)  
+- [Support & Donations](#-support--donations)  
+
 
 ---
 
